@@ -22,6 +22,8 @@ function App() {
   const [jobs, setJobs] = useState([]);
   const [search, setSearch] = useState("");
   const [deletedJob, setDeletedJob] = useState(null);
+  const [editingJob, setEditingJob] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   /* ---------------- HELPERS ---------------- */
   const logout = () => {
@@ -89,6 +91,14 @@ function App() {
       setJobs([...jobs, deletedJob]);
       setDeletedJob(null);
     }
+  };
+  const saveEdit = () => {
+    axios.put(`${API}/jobs/${editingJob._id}`, editForm, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    }).then(res => {
+      setJobs(jobs.map(j => j._id === res.data._id ? res.data : j));
+      setEditingJob(null);
+    });
   };
 
   /* ---------------- STORAGE ---------------- */
@@ -294,6 +304,12 @@ function App() {
                 <button onClick={() => deleteJob(job)}>Delete</button>
                 <button
                   style={{ marginLeft: "8px" }}
+                  onClick={() => { setEditingJob(job); setEditForm({ role: job.role, company: job.company, closingDate: job.closingDate }); }}
+                >
+                  Edit
+                </button>
+                <button
+                  style={{ marginLeft: "8px" }}
                   onClick={() => addToGoogleCalendar(job)}
                 >
                   📅
@@ -445,6 +461,53 @@ function App() {
     )
   }
   />
+      {editingJob && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
+          alignItems: "center", justifyContent: "center", zIndex: 1000
+        }}>
+          <div style={{
+            background: "#fff", padding: "2rem", borderRadius: "8px",
+            width: "90%", maxWidth: "420px", display: "flex",
+            flexDirection: "column", gap: "0.75rem"
+          }}>
+            <h3>Edit Job</h3>
+      
+            <label>Role</label>
+            <input
+              value={editForm.role}
+              onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <label>Company</label>
+            <input
+              value={editForm.company}
+              onChange={e => setEditForm({ ...editForm, company: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <label>Closing Date</label>
+            <input
+              type="date"
+              value={editForm.closingDate}
+              onChange={e => setEditForm({ ...editForm, closingDate: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "0.5rem" }}>
+              <button onClick={() => setEditingJob(null)}>Cancel</button>
+              <button
+                onClick={saveEdit}
+                style={{ background: "#4f46e5", color: "#fff", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
   </Routes>
 );
 }
