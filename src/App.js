@@ -198,8 +198,7 @@ function App() {
   };
 
   return (
-  <>
-    <Routes>
+      <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
@@ -208,317 +207,310 @@ function App() {
         element={
           localStorage.getItem("token") ? (
             <div className="container">
-              <h1>Job Application Tracker</h1>
-              <button
-                onClick={logout}
-                style={{
-                  position: "absolute",
-                  top: 20,
-                  right: 20,
-                  padding: "6px 12px",
-                  cursor: "pointer"
-                }}
-              >
-                Logout
-              </button>
-              <div className="stats-panel">
-              <div><strong>Total</strong><br />{stats.total}</div>
-              <div><strong>To Apply</strong><br />{stats.toApply}</div>
-              <div><strong>Applied</strong><br />{stats.applied}</div>
-              <div><strong>Pending</strong><br />{stats.pending}</div>
-              <div><strong>Accepted</strong><br />{stats.accepted}</div>
-              <div><strong>Rejected</strong><br />{stats.rejected}</div>
-              <div><strong>Expired</strong><br />{stats.expired}</div>
-            </div>
+      <h1>Job Application Tracker</h1>
+      <button
+          onClick={logout}
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            padding: "6px 12px",
+            cursor: "pointer"
+          }}
+        >
+          Logout
+        </button>
 
+      <div className="stats-panel">
+      <div><strong>Total</strong><br />{stats.total}</div>
+      <div><strong>To Apply</strong><br />{stats.toApply}</div>
+      <div><strong>Applied</strong><br />{stats.applied}</div>
+      <div><strong>Pending</strong><br />{stats.pending}</div>
+      <div><strong>Accepted</strong><br />{stats.accepted}</div>
+      <div><strong>Rejected</strong><br />{stats.rejected}</div>
+      <div><strong>Expired</strong><br />{stats.expired}</div>
+    </div>
 
-              <input
-                placeholder="Find job..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-
-
-              <div className="form">
-                <input
-                  placeholder="Role"
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                />
-                <input
-                  placeholder="Company"
-                  value={form.company}
-                  onChange={(e) => setForm({ ...form, company: e.target.value })}
-                />
-                <input
-                  type="date"
-                  value={form.closingDate}
-                  onChange={(e) =>
-                    setForm({ ...form, closingDate: e.target.value })
-                  }
-                />
-                <button onClick={addJob}>Add Job</button>
-                <button onClick={exportCSV}>Export CSV</button>
-              </div>
-
-
-              {deletedJob && (
-                <button onClick={undoDelete}>Undo Delete</button>
-              )}
-
-
-              {/* ---------------- APPLICATIONS TO APPLY ---------------- */}
-              <h2>Applications To Apply</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Select</th>
-                    <th>Role</th>
-                    <th>Company</th>
-                    <th>Last Date</th>
-                    <th>Days Left</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {toApply.map(job => (
-                    <tr key={job._id || job.id} className={getRowClass(job.status)}>
-                      <td>
-                        {job.status !== "Expired" && (
-                          <input
-                            type="checkbox"
-                            checked={job.selected}
-                            onChange={() =>
-                              setJobs(jobs.map(j =>
-                                (j._id || j.id) === (job._id || job.id)
-                                    ? { ...j, selected: !j.selected }
-                                    : j
-                              ))
-                            }
-                          />
-                        )}
-                      </td>
-                      <td>{job.role}</td>
-                      <td>{job.company}</td>
-                      <td>{formatDate(job.closingDate)}</td>
-                      <td>{getDaysLeft(job.closingDate) < 0 ? "—" : getDaysLeft(job.closingDate)}</td>
-                      <td>{job.status}</td>
-                      <td>
-                        <button onClick={() => deleteJob(job)}>Delete</button>
-                        <button
-                          style={{ marginLeft: "8px" }}
-                          onClick={() => { setEditingJob(job); setEditForm({ role: job.role, company: job.company, closingDate: job.closingDate }); }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          style={{ marginLeft: "8px" }}
-                          onClick={() => addToGoogleCalendar(job)}
-                        >
-                          📅
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-
-              <button
-                style={{ marginTop: 20 }}
-                onClick={() => {
-                  const today = new Date().toISOString().split("T")[0];
-                  setJobs(jobs.map(j =>
-                    j.selected === true
-                      ? { ...j, status: "Pending", appliedDate: today, selected: false }
-                      : j
-                  ));
-                }}
-              >
-                Mark selected jobs applied
-              </button>
-
-
-              {/* ---------------- APPLIED APPLICATIONS ---------------- */}
-              <h2>Applied Applications</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Status</th>
-                    <th>Has Rounds?</th>
-                    <th>Rounds</th>
-                    {Array.from({ length: maxRounds }).map((_, i) => (
-                      <th key={i}>R{i + 1}</th>
-                    ))}
-                    <th>Role</th>
-                    <th>Company</th>
-                    <th>Applied On</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-
-
-                <tbody>
-                  {applied.map(job => (
-                    <tr key={job._id || job.id} className={getRowClass(job.status)}>
-                      <td>
-                        {!job.hasRounds ? (
-                          <select
-                            value={job.status}
-                            onChange={(e) =>
-                              setJobs(jobs.map(j =>
-                                (j._id || j.id) === (job._id || job.id) ? { ...j, status: e.target.value } : j
-                              ))
-                            }
-                          >
-                            {FINAL_STATUS.map(s => (
-                              <option key={s}>{s}</option>
-                            ))}
-                          </select>
-                        ) : job.status}
-                      </td>
-
-
-                      <td>
-                        <select
-                          value={job.hasRounds ? "Yes" : "No"}
-                          onChange={(e) =>
-                            setJobs(jobs.map(j =>
-                              (j._id || j.id) === (job._id || job.id)
-                                ? { ...j, hasRounds: e.target.value === "Yes", roundCount: 0, rounds: [], status: "Pending" }
-                                : j
-                            ))
-                          }
-                        >
-                          <option>No</option>
-                          <option>Yes</option>
-                        </select>
-                      </td>
-
-
-                      <td>
-                        {job.hasRounds && (
-                          <select
-                            value={job.roundCount || ""}
-                            onChange={(e) => {
-                              const count = Number(e.target.value);
-                              setJobs(jobs.map(j =>
-                                (j._id || j.id) === (job._id || job.id)
-                                  ? { ...j, roundCount: count, rounds: Array(count).fill("Pending"), status: "Pending" }
-                                  : j
-                              ));
-                            }}
-                          >
-                            <option value="">Select</option>
-                            {ROUND_COUNTS.map(c => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        )}
-                      </td>
-
-
-                      {Array.from({ length: maxRounds }).map((_, idx) => (
-                        <td key={idx}>
-                          {job.hasRounds && idx < job.roundCount && (
-                            <select
-                              value={job.rounds[idx]}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setJobs(jobs.map(j => {
-                                  if ((j._id || j.id) !== (job._id || job.id)) return j;
-
-
-                                  const rounds = [...j.rounds];
-                                  rounds[idx] = value;
-
-
-                                  if (value === "Rejected") {
-                                    for (let i = idx + 1; i < rounds.length; i++) rounds[i] = "Rejected";
-                                  }
-
-
-                                  const status =
-                                    rounds.every(r => r === "Selected")
-                                      ? "Accepted"
-                                      : rounds.some(r => r === "Rejected")
-                                      ? "Rejected"
-                                      : "Pending";
-
-
-                                  return { ...j, rounds, status };
-                                }));
-                              }}
-                            >
-                              {ROUND_OPTIONS.map(o => (
-                                <option key={o}>{o}</option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                      ))}
-
-
-                      <td>{job.role}</td>
-                      <td>{job.company}</td>
-                      <td>{formatDate(job.appliedDate)}</td>
-                      <td>
-                        <button onClick={() => deleteJob(job)}>Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
+      <input
+        placeholder="Find job..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
       />
-    </Routes>
 
-    {editingJob && (
-      <div style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
-        alignItems: "center", justifyContent: "center", zIndex: 1000
-      }}>
+      <div className="form">
+        <input
+          placeholder="Role"
+          value={form.role}
+          onChange={(e) => setForm({ ...form, role: e.target.value })}
+        />
+        <input
+          placeholder="Company"
+          value={form.company}
+          onChange={(e) => setForm({ ...form, company: e.target.value })}
+        />
+        <input
+          type="date"
+          value={form.closingDate}
+          onChange={(e) =>
+            setForm({ ...form, closingDate: e.target.value })
+          }
+        />
+        <button onClick={addJob}>Add Job</button>
+        <button onClick={exportCSV}>Export CSV</button>
+      </div>
+
+      {deletedJob && (
+        <button onClick={undoDelete}>Undo Delete</button>
+      )}
+
+      {/* ---------------- APPLICATIONS TO APPLY ---------------- */}
+      <h2>Applications To Apply</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>Role</th>
+            <th>Company</th>
+            <th>Last Date</th>
+            <th>Days Left</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {toApply.map(job => (
+            <tr key={job._id || job.id} className={getRowClass(job.status)}>
+              <td>
+                {job.status !== "Expired" && (
+                  <input
+                    type="checkbox"
+                    checked={job.selected}
+                    onChange={() =>
+                      setJobs(jobs.map(j =>
+                        (j._id || j.id) === (job._id || job.id)
+                            ? { ...j, selected: !j.selected }
+                            : j
+                      ))
+                    }
+                  />
+                )}
+              </td>
+              <td>{job.role}</td>
+              <td>{job.company}</td>
+              <td>{formatDate(job.closingDate)}</td>
+              <td>{getDaysLeft(job.closingDate) < 0 ? "—" : getDaysLeft(job.closingDate)}</td>
+              <td>{job.status}</td>
+              <td>
+                <button onClick={() => deleteJob(job)}>Delete</button>
+                <button
+                  style={{ marginLeft: "8px" }}
+                  onClick={() => { setEditingJob(job); setEditForm({ role: job.role, company: job.company, closingDate: job.closingDate }); }}
+                >
+                  Edit
+                </button>
+                <button
+                  style={{ marginLeft: "8px" }}
+                  onClick={() => addToGoogleCalendar(job)}
+                >
+                  📅
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button
+        style={{ marginTop: 20 }}
+        onClick={() => {
+          const today = new Date().toISOString().split("T")[0];
+          setJobs(jobs.map(j =>
+            j.selected === true
+              ? { ...j, status: "Pending", appliedDate: today, selected: false }
+              : j
+          ));
+        }}
+      >
+        Mark selected jobs applied
+      </button>
+
+      {/* ---------------- APPLIED APPLICATIONS ---------------- */}
+      <h2>Applied Applications</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Has Rounds?</th>
+            <th>Rounds</th>
+            {Array.from({ length: maxRounds }).map((_, i) => (
+              <th key={i}>R{i + 1}</th>
+            ))}
+            <th>Role</th>
+            <th>Company</th>
+            <th>Applied On</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {applied.map(job => (
+            <tr key={job._id || job.id} className={getRowClass(job.status)}>
+              <td>
+                {!job.hasRounds ? (
+                  <select
+                    value={job.status}
+                    onChange={(e) =>
+                      setJobs(jobs.map(j =>
+                        (j._id || j.id) === (job._id || job.id) ? { ...j, status: e.target.value } : j
+                      ))
+                    }
+                  >
+                    {FINAL_STATUS.map(s => (
+                      <option key={s}>{s}</option>
+                    ))}
+                  </select>
+                ) : job.status}
+              </td>
+
+              <td>
+                <select
+                  value={job.hasRounds ? "Yes" : "No"}
+                  onChange={(e) =>
+                    setJobs(jobs.map(j =>
+                      (j._id || j.id) === (job._id || job.id)
+                        ? { ...j, hasRounds: e.target.value === "Yes", roundCount: 0, rounds: [], status: "Pending" }
+                        : j
+                    ))
+                  }
+                >
+                  <option>No</option>
+                  <option>Yes</option>
+                </select>
+              </td>
+
+              <td>
+                {job.hasRounds && (
+                  <select
+                    value={job.roundCount || ""}
+                    onChange={(e) => {
+                      const count = Number(e.target.value);
+                      setJobs(jobs.map(j =>
+                        (j._id || j.id) === (job._id || job.id)
+                          ? { ...j, roundCount: count, rounds: Array(count).fill("Pending"), status: "Pending" }
+                          : j
+                      ));
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {ROUND_COUNTS.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                )}
+              </td>
+
+              {Array.from({ length: maxRounds }).map((_, idx) => (
+                <td key={idx}>
+                  {job.hasRounds && idx < job.roundCount && (
+                    <select
+                      value={job.rounds[idx]}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setJobs(jobs.map(j => {
+                          if ((j._id || j.id) !== (job._id || job.id)) return j;
+
+                          const rounds = [...j.rounds];
+                          rounds[idx] = value;
+
+                          if (value === "Rejected") {
+                            for (let i = idx + 1; i < rounds.length; i++) rounds[i] = "Rejected";
+                          }
+
+                          const status =
+                            rounds.every(r => r === "Selected")
+                              ? "Accepted"
+                              : rounds.some(r => r === "Rejected")
+                              ? "Rejected"
+                              : "Pending";
+
+                          return { ...j, rounds, status };
+                        }));
+                      }}
+                    >
+                      {ROUND_OPTIONS.map(o => (
+                        <option key={o}>{o}</option>
+                      ))}
+                    </select>
+                  )}
+                </td>
+              ))}
+
+              <td>{job.role}</td>
+              <td>{job.company}</td>
+              <td>{formatDate(job.appliedDate)}</td>
+              <td>
+                <button onClick={() => deleteJob(job)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+    ) : (
+      <Navigate to="/login" />
+    )
+  }
+  />
+      {editingJob && (
         <div style={{
-          background: "#fff", padding: "2rem", borderRadius: "8px",
-          width: "90%", maxWidth: "420px", display: "flex",
-          flexDirection: "column", gap: "0.75rem"
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)", display: "flex",
+          alignItems: "center", justifyContent: "center", zIndex: 1000
         }}>
-          <h3>Edit Job</h3>
-
-          <label>Role</label>
-          <input
-            value={editForm.role}
-            onChange={e => setEditForm({ ...editForm, role: e.target.value })}
-          />
-
-          <label>Company</label>
-          <input
-            value={editForm.company}
-            onChange={e => setEditForm({ ...editForm, company: e.target.value })}
-          />
-
-          <label>Closing Date</label>
-          <input
-            type="date"
-            value={editForm.closingDate}
-            onChange={e => setEditForm({ ...editForm, closingDate: e.target.value })}
-          />
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}>
-            <button onClick={() => setEditingJob(null)}>Cancel</button>
-            <button onClick={saveEdit}>Save</button>
+          <div style={{
+            background: "#fff", padding: "2rem", borderRadius: "8px",
+            width: "90%", maxWidth: "420px", display: "flex",
+            flexDirection: "column", gap: "0.75rem"
+          }}>
+            <h3>Edit Job</h3>
+      
+            <label>Role</label>
+            <input
+              value={editForm.role}
+              onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <label>Company</label>
+            <input
+              value={editForm.company}
+              onChange={e => setEditForm({ ...editForm, company: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <label>Closing Date</label>
+            <input
+              type="date"
+              value={editForm.closingDate}
+              onChange={e => setEditForm({ ...editForm, closingDate: e.target.value })}
+              style={{ padding: "0.5rem", borderRadius: "4px", border: "1px solid #ccc" }}
+            />
+      
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "1rem", marginTop: "0.5rem" }}>
+              <button onClick={() => setEditingJob(null)}>Cancel</button>
+              <button
+                onClick={saveEdit}
+                style={{ background: "#4f46e5", color: "#fff", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </>
-  );
+      )}
+  </Routes>
+);
 }
+
 
 export default App;
