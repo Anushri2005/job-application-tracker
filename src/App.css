@@ -60,6 +60,14 @@ td {
   text-align: center;
 }
 
+td:last-child {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
 .status-accepted {
   background: #ecfff3;
   color: #0f7a3d;
